@@ -47,7 +47,7 @@ class List<T> implements Iterable<T>
 
     <R> List<R> map(Function<T, R> f)
     {
-        Function<R, List<R>> unit = new Function<R, List<R>>()
+        final Function<R, List<R>> unit = new Function<R, List<R>>()
         {
             public List<R> apply(R r)
             {
@@ -103,20 +103,54 @@ class Error<T>
     {
         return result;
     }
+
+    <R> Error<R> flatMap(Function<T, Error<R>> f)
+    {
+        if (this.ok())
+        {
+            return f.apply(result);
+        }
+        else
+        {
+            return new Error<R>(message);
+        }
+    }
 }
 
 class Future<T>
 {
-    T t;
+    T result;
 
-    Future(T t)
+    Future(T result)
     {
-        this.t = t;
+        this.result = result;
     }
 
     T get()
     {
-        return t;
+        return result;
+    }
+
+    static <T> Future<T> unit(T t)
+    {
+        return new Future<T>(t);
+    }
+
+    <R> Future<R> map(Function<T, R> f)
+    {
+        final Function<R, Future<R>> unit = new Function<R, Future<R>>()
+        {
+            public Future<R> apply(R r)
+            {
+                return unit(r);
+            }
+        };
+        return flatMap(f.andThen(unit));
+    }
+
+    <R> Future<R> flatMap(Function<T, Future<R>> f)
+    {
+        return f.apply(result);
     }
 }
 
@@ -199,8 +233,7 @@ public class Example
 
     public static List<Project> fetchAllProjectsVersion2()
     {
-        List<RemoteServer> remoteServers = getRemoteServers();
-        Function<RemoteServer, Future<Error<List<Project>>>> fetchProjects
+        final Function<RemoteServer, Future<Error<List<Project>>>> fetchProjects
             = new Function<RemoteServer, Future<Error<List<Project>>>>()
             {
                 public Future<Error<List<Project>>> apply(RemoteServer server)
@@ -208,7 +241,7 @@ public class Example
                     return server.fetchProjects();
                 }
             };
-        Function<Future<Error<List<Project>>>, List<Project>> getOk
+        final Function<Future<Error<List<Project>>>, List<Project>> getOk
             = new Function<Future<Error<List<Project>>>, List<Project>>()
             {
                 public List<Project> apply(Future<Error<List<Project>>> eventuallyMaybeProjects)
@@ -225,14 +258,72 @@ public class Example
                     }
                 }
             };
+        List<RemoteServer> remoteServers = getRemoteServers();
         List<Future<Error<List<Project>>>> allEventuallyMaybeProjects = remoteServers.map(fetchProjects);
         List<Project> allProjects = allEventuallyMaybeProjects.flatMap(getOk);
         return allProjects;
     }
 
+    static <T> T ignoreErrors(Error<T> maybe, T fallback)
+    {
+        if (maybe.ok())
+        {
+            return maybe.result();
+        }
+        else
+        {
+            return fallback;
+        }
+    }
+
+    static <T> Future<List<T>> waitAll(List<Future<T>> futures)
+    {
+        final Function<Future<T>, T> get = new Function<Future<T>, T>()
+        {
+            public T apply(Future<T> future)
+            {
+                return future.get();
+            }
+        };
+        return new Future<List<T>>(futures.map(get));
+    }
+
+    public static List<Project> fetchAllProjectsVersion3()
+    {
+        final Function<RemoteServer, Future<Error<List<Project>>>> fetchProjects
+            = new Function<RemoteServer, Future<Error<List<Project>>>>()
+            {
+                public Future<Error<List<Project>>> apply(RemoteServer server)
+                {
+                    return server.fetchProjects();
+                }
+            };
+        final Function<Error<List<Project>>, List<Project>> ignoreErrors
+            = new Function<Error<List<Project>>, List<Project>>()
+            {
+                public List<Project> apply(Error<List<Project>> maybeProjects)
+                {
+                    return ignoreErrors(maybeProjects, new List<Project>());
+                }
+            };
+        final Function<List<Error<List<Project>>>, List<Project>> allIgnoreErrors
+            = new Function<List<Error<List<Project>>>, List<Project>>()
+            {
+                public List<Project> apply(List<Error<List<Project>>> allMaybeProjects)
+                {
+                    return allMaybeProjects.flatMap(ignoreErrors);
+                }
+            };
+        List<RemoteServer> remoteServers = getRemoteServers();
+        List<Future<Error<List<Project>>>> allEventuallyMaybeProjects = remoteServers.map(fetchProjects);
+        Future<List<Error<List<Project>>>> eventuallyAllMaybeProjects = waitAll(allEventuallyMaybeProjects);
+        Future<List<Project>> eventuallyAllProjects = eventuallyAllMaybeProjects.map(allIgnoreErrors);
+        return eventuallyAllProjects.get();
+    }
+
     public static void main(String[] args)
     {
-        List<Project> allProjects = fetchAllProjectsVersion2();
+        List<Project> allProjects = fetchAllProjectsVersion3();
         for(Project project : allProjects)
         {
             System.out.println(project.getName());
