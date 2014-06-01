@@ -28,13 +28,6 @@ class Future<T>
 
     <R> Future<R> map(Function<T, R> f)
     {
-        final Function<R, Future<R>> unit = new Function<R, Future<R>>()
-        {
-            public Future<R> apply(R r)
-            {
-                return unit(r);
-            }
-        };
-        return flatMap(f.andThen(unit));
+        return flatMap(f.andThen(r -> unit(r)));
     }
 }

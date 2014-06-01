@@ -43,13 +43,6 @@ class List<T> implements Iterable<T>
 
     <R> List<R> map(Function<T, R> f)
     {
-        final Function<R, List<R>> unit = new Function<R, List<R>>()
-        {
-            public List<R> apply(R r)
-            {
-                return unit(r);
-            }
-        };
-        return flatMap(f.andThen(unit));
+        return flatMap(f.andThen(r -> unit(r)));
     }
 }
