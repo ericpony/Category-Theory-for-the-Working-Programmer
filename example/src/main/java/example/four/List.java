@@ -1,10 +1,14 @@
 package example.four;
 
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Singly-linked (cons) list. Prepends to start rather than adds to end (ie.
+ * it's an immutable Stack).
+ */
 public abstract class List<T> implements Iterable<T>
 {
     @SafeVarargs
@@ -25,12 +29,12 @@ public abstract class List<T> implements Iterable<T>
 
     public static <T> List<T> empty()
     {
-        return new Empty<T>();
+        return new Empty<>();
     }
 
     public List<T> prepend(T t)
     {
-        return new Node<T>(this, t);
+        return new Node<>(this, t);
     }
 
     public <R> List<R> flatMap(Function<T, List<R>> f)
@@ -51,26 +55,27 @@ public abstract class List<T> implements Iterable<T>
         return flatMap(f.andThen(r -> unit(r)));
     }
 
-    @Override
-    public void forEach(Consumer<? super T> action)
-    {
-        for (T t : this)
-        {
-            action.accept(t);
-        }
-    }
-
     //
     // abstract
     //
 
-    abstract List<T> next();
+    public abstract boolean isEmpty();
 
-    abstract T value();
+    public abstract T head();
 
-    abstract boolean isEmpty();
+    public abstract List<T> tail();
 
-    abstract List<T> reverse();
+    public abstract List<T> reverse();
+
+    <X> X foldLeft(X init, BiFunction<X, T, X> f)
+    {
+        X result = init;
+        for (T t : this)
+        {
+            result = f.apply(result, t);
+        }
+        return result;
+    }
 
     static class Node<T> extends List<T>
     {
@@ -83,30 +88,23 @@ public abstract class List<T> implements Iterable<T>
             this.value = value;
         }
 
-        @Override
-        List<T> next()
-        {
-            return next;
-        }
-
-        @Override
-        T value()
+        public T head()
         {
             return value;
         }
 
-        List<T> reverse()
+        public List<T> tail()
         {
-            List<T> result = empty();
-            for (T t : this)
-            {
-                result = result.prepend(t);
-            }
-            return result;
+            return next;
+        }
+
+        public List<T> reverse()
+        {
+            return foldLeft(List.<T> empty(), (ts, t) -> ts.prepend(t));
         }
 
         @Override
-        boolean isEmpty()
+        public boolean isEmpty()
         {
             return false;
         }
@@ -115,27 +113,27 @@ public abstract class List<T> implements Iterable<T>
     static class Empty<T> extends List<T>
     {
         @Override
-        List<T> next()
-        {
-            throw new NoSuchElementException();
-        }
-
-        @Override
-        T value()
-        {
-            throw new NoSuchElementException();
-        }
-
-        @Override
-        List<T> reverse()
+        public List<T> reverse()
         {
             return this;
         }
 
         @Override
-        boolean isEmpty()
+        public boolean isEmpty()
         {
             return true;
+        }
+
+        @Override
+        public T head()
+        {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public List<T> tail()
+        {
+            throw new NoSuchElementException();
         }
     }
 
@@ -156,18 +154,12 @@ public abstract class List<T> implements Iterable<T>
             {
                 try
                 {
-                    return current.value();
+                    return current.head();
                 }
                 finally
                 {
-                    current = current.next();
+                    current = current.tail();
                 }
-            }
-
-            @Override
-            public void remove()
-            {
-                throw new UnsupportedOperationException();
             }
         };
     }
@@ -178,7 +170,7 @@ public abstract class List<T> implements Iterable<T>
         if (isEmpty())
             return "List()";
         final StringBuilder builder = new StringBuilder("List(");
-        this.forEach( t -> builder.append(t).append(",") );
+        this.forEach(t -> builder.append(t).append(","));
         builder.setCharAt(builder.length() - 1, ')');
         return builder.toString();
     }
