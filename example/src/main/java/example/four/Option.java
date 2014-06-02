@@ -1,33 +1,31 @@
 package example.four;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public abstract class Option<T>
+public abstract class Option<T> implements Iterable<T>
 {
     public static <T> Option<T> unit(T t)
     {
-        return new Some<T>(t);
+        return new Some<>(t);
     }
 
     public static <T> Option<T> none()
     {
-        return new None<T>();
+        return new None<>();
     }
 
     public abstract <R> Option<R> map(Function<T, R> f);
 
     public abstract <R> Option<R> flatMap(Function<T, Option<R>> f);
 
-    public abstract void each(Consumer<T> c);
-
     public abstract boolean isDefined();
 
     public abstract T get();
 
-    public abstract T getOrElse(Supplier<T> supplier);
+    public abstract T getOrElse(T otherwise);
 
     static class Some<T> extends Option<T>
     {
@@ -51,12 +49,6 @@ public abstract class Option<T>
         }
 
         @Override
-        public void each(Consumer<T> c)
-        {
-            c.accept(value);
-        }
-
-        @Override
         public boolean isDefined()
         {
             return true;
@@ -69,9 +61,22 @@ public abstract class Option<T>
         }
 
         @Override
-        public T getOrElse(Supplier<T> supplier)
+        public T getOrElse(T otherwise)
         {
             return value;
+        }
+
+        @Override
+        public Iterator<T> iterator()
+        {
+            return Collections.singleton(value).iterator();
+        }
+
+        @Override
+        public String toString()
+        {
+
+            return "Some(" + value + ")";
         }
     }
 
@@ -83,7 +88,7 @@ public abstract class Option<T>
         @Override
         public <R> Option<R> map(Function<T, R> f)
         {
-            return new None<R>();
+            return none();
         }
 
         @Override
@@ -91,10 +96,6 @@ public abstract class Option<T>
         {
             return new None<R>();
         }
-
-        @Override
-        public void each(Consumer<T> c)
-        {}
 
         @Override
         public boolean isDefined()
@@ -109,9 +110,22 @@ public abstract class Option<T>
         }
 
         @Override
-        public T getOrElse(Supplier<T> supplier)
+        public T getOrElse(T otherwise)
         {
-            return supplier.get();
+            return otherwise;
+        }
+
+        @Override
+        public Iterator<T> iterator()
+        {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        public String toString()
+        {
+
+            return "None()";
         }
     }
 }
