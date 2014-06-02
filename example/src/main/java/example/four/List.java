@@ -1,6 +1,7 @@
 package example.four;
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -31,28 +32,45 @@ public abstract class List<T> implements Iterable<T>
     {
         return new Empty<>();
     }
+    
+    // should not be extended outside of this compilation unit
+    List()
+    {}
 
-    public List<T> prepend(T t)
+    public final List<T> prepend(T t)
     {
         return new Node<>(this, t);
     }
 
-    public <R> List<R> flatMap(Function<T, List<R>> f)
+    public final <R> List<R> flatMap(Function<T, List<R>> f)
     {
-        List<R> result = empty();
-        for (T t : this.reverse())
+        return foldRight(empty(), (t, rlist) -> f.apply(t).foldRight(rlist, (r, rs) -> rs.prepend(r)));
+    }
+
+    public final <R> List<R> map(Function<T, R> f)
+    {
+        return flatMap(f.andThen(r -> unit(r)));
+        //return foldRight(empty(), (t, rs) -> rs.prepend(f.apply(t)));
+    }
+
+    public final T fold(T zero, BinaryOperator<T> f)
+    {
+        return foldLeft(zero, f);
+    }
+
+    public final <X> X foldLeft(X zero, BiFunction<X, T, X> f)
+    {
+        X result = zero;
+        for (T t : this)
         {
-            for (R r : f.apply(t).reverse())
-            {
-                result = result.prepend(r);
-            }
+            result = f.apply(result, t);
         }
         return result;
     }
 
-    public <R> List<R> map(Function<T, R> f)
+    public <X> X foldRight(X zero, BiFunction<T, X, X> f)
     {
-        return flatMap(f.andThen(r -> unit(r)));
+        return reverse().foldLeft(zero, (x, t) -> f.apply(t, x));
     }
 
     //
@@ -61,21 +79,11 @@ public abstract class List<T> implements Iterable<T>
 
     public abstract boolean isEmpty();
 
-    public abstract T head();
-
-    public abstract List<T> tail();
-
     public abstract List<T> reverse();
 
-    <X> X foldLeft(X init, BiFunction<X, T, X> f)
-    {
-        X result = init;
-        for (T t : this)
-        {
-            result = f.apply(result, t);
-        }
-        return result;
-    }
+    abstract T head() throws NoSuchElementException;
+
+    abstract List<T> tail() throws NoSuchElementException;
 
     static class Node<T> extends List<T>
     {
