@@ -1,49 +1,185 @@
 package example.four;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-class List<T> implements Iterable<T>
+public abstract class List<T> implements Iterable<T>
 {
-    java.util.List<T> impl;
-
-    List()
+    @SafeVarargs
+    public static <T> List<T> of(T... ts)
     {
-        impl = new java.util.ArrayList<T>();
-    }
-
-    void add(T t)
-    {
-        impl.add(t);
-    }
-
-    public java.util.Iterator<T> iterator()
-    {
-        return impl.iterator();
-    }
-
-    static <T> List<T> unit(T t)
-    {
-        List<T> single = new List<T>();
-        single.add(t);
-        return single;
-    }
-
-    <R> List<R> flatMap(Function<T, List<R>> f)
-    {
-        List<R> rs = new List<R>();
-        for (T t : impl)
+        List<T> result = empty();
+        for (int i = ts.length - 1; i >= 0; i--)
         {
-            for(R r : f.apply(t))
+            result = result.prepend(ts[i]);
+        }
+        return result;
+    }
+
+    public static <T> List<T> unit(T t)
+    {
+        return of(t);
+    }
+
+    public static <T> List<T> empty()
+    {
+        return new Empty<T>();
+    }
+
+    public List<T> prepend(T t)
+    {
+        return new Node<T>(this, t);
+    }
+
+    public <R> List<R> flatMap(Function<T, List<R>> f)
+    {
+        List<R> result = empty();
+        for (T t : this.reverse())
+        {
+            for (R r : f.apply(t).reverse())
             {
-                rs.add(r);
+                result = result.prepend(r);
             }
         }
-        return rs;
+        return result;
     }
 
-    <R> List<R> map(Function<T, R> f)
+    public <R> List<R> map(Function<T, R> f)
     {
         return flatMap(f.andThen(r -> unit(r)));
-        // return flatMap(t -> unit(f.apply(t)));
+    }
+
+    @Override
+    public void forEach(Consumer<? super T> action)
+    {
+        for (T t : this)
+        {
+            action.accept(t);
+        }
+    }
+
+    //
+    // abstract
+    //
+
+    abstract List<T> next();
+
+    abstract T value();
+
+    abstract boolean isEmpty();
+
+    abstract List<T> reverse();
+
+    static class Node<T> extends List<T>
+    {
+        final List<T> next;
+        final T value;
+
+        Node(List<T> next, T value)
+        {
+            this.next = next;
+            this.value = value;
+        }
+
+        @Override
+        List<T> next()
+        {
+            return next;
+        }
+
+        @Override
+        T value()
+        {
+            return value;
+        }
+
+        List<T> reverse()
+        {
+            List<T> result = empty();
+            for (T t : this)
+            {
+                result = result.prepend(t);
+            }
+            return result;
+        }
+
+        @Override
+        boolean isEmpty()
+        {
+            return false;
+        }
+    }
+
+    static class Empty<T> extends List<T>
+    {
+        @Override
+        List<T> next()
+        {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        T value()
+        {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        List<T> reverse()
+        {
+            return this;
+        }
+
+        @Override
+        boolean isEmpty()
+        {
+            return true;
+        }
+    }
+
+    public Iterator<T> iterator()
+    {
+        return new Iterator<T>()
+        {
+            List<T> current = List.this;
+
+            @Override
+            public boolean hasNext()
+            {
+                return !current.isEmpty();
+            }
+
+            @Override
+            public T next()
+            {
+                try
+                {
+                    return current.value();
+                }
+                finally
+                {
+                    current = current.next();
+                }
+            }
+
+            @Override
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    @Override
+    public String toString()
+    {
+        if (isEmpty())
+            return "List()";
+        final StringBuilder builder = new StringBuilder("List(");
+        this.forEach( t -> builder.append(t).append(",") );
+        builder.setCharAt(builder.length() - 1, ')');
+        return builder.toString();
     }
 }

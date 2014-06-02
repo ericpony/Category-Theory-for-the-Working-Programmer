@@ -2,7 +2,7 @@ package example.one;
 
 class Project
 {
-    String name;
+    final String name;
 
     Project(String name)
     {

@@ -1,6 +1,7 @@
 package example.four;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 class Error<T>
 {
@@ -33,6 +34,18 @@ class Error<T>
     T result()
     {
         return result;
+    }
+
+    T getOrElse(T otherwise)
+    {
+        if (ok)
+        {
+            return result;
+        }
+        else
+        {
+            return otherwise;
+        }
     }
 
     <R> Error<R> flatMap(Function<T, Error<R>> f)

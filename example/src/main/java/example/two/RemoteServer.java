@@ -2,18 +2,13 @@ package example.two;
 
 class RemoteServer
 {
-    String name;
-    List<Project> projects;
+    final String name;
+    final List<Project> projects;
 
-    RemoteServer(String name)
+    RemoteServer(String name, Project... projects)
     {
         this.name = name;
-        this.projects = new List<Project>();
-    }
-
-    void addProject(Project project)
-    {
-        projects.add(project);
+        this.projects = List.of(projects);
     }
 
     Future<Error<List<Project>>> fetchProjects()

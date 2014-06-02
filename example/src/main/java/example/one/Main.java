@@ -4,26 +4,16 @@ public class Main
 {
     static List<RemoteServer> getRemoteServers()
     {
-        List<RemoteServer> servers = new List<RemoteServer>();
-        RemoteServer ean = new RemoteServer("EAN");
-        ean.addProject(new Project("PLUG"));
-        ean.addProject(new Project("PLUGDEV"));
-        servers.add(ean);
-        RemoteServer jac = new RemoteServer("JAC");
-        jac.addProject(new Project("CONF"));
-        jac.addProject(new Project("CONFDEV"));
-        servers.add(jac);
-        RemoteServer jdog = new RemoteServer("JDOG");
-        jdog.addProject(new Project("FECRU"));
-        jdog.addProject(new Project("JDEV"));
-        servers.add(jdog);
-        return servers;
+        return List.<RemoteServer> of(
+            new RemoteServer("EAN", new Project("PLUG"), new Project("PLUGDEV")),
+            new RemoteServer("JAC", new Project("CONF"), new Project("CONFDEV")),
+            new RemoteServer("JDOG", new Project("FECRU"), new Project("JDEV")));
     }
 
     public static List<Project> fetchAllProjects()
     {
         List<RemoteServer> remoteServers = getRemoteServers();
-        List<Project> allProjects = new List<Project>();
+        List<Project> allProjects = new List<>();
         for(RemoteServer server : remoteServers)
         {
             Future<Error<List<Project>>> eventuallyMaybeProjects = server.fetchProjects();

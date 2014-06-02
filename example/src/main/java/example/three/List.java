@@ -1,17 +1,28 @@
 package example.three;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.ArrayList;
+
 class List<T> implements Iterable<T>
 {
-    java.util.List<T> impl;
-
-    List()
+    @SafeVarargs
+    public static <T> List<T> of(T... ts)
     {
-        impl = new java.util.ArrayList<T>();
+        return new List<T>(new ArrayList<>(asList(ts)));
     }
 
-    void add(T t)
+    static <T> List<T> unit(T t)
     {
-        impl.add(t);
+        return of(t);
+    }
+    
+    final java.util.List<T> impl;
+
+    List(java.util.List<T> impl)
+    {
+        this.impl = unmodifiableList(impl);
     }
 
     public java.util.Iterator<T> iterator()
@@ -19,16 +30,9 @@ class List<T> implements Iterable<T>
         return impl.iterator();
     }
 
-    static <T> List<T> unit(T t)
-    {
-        List<T> single = new List<T>();
-        single.add(t);
-        return single;
-    }
-
     <R> List<R> flatMap(Function<T, List<R>> f)
     {
-        List<R> rs = new List<R>();
+        java.util.List<R> rs = new java.util.ArrayList<R>();
         for (T t : impl)
         {
             for(R r : f.apply(t))
@@ -36,7 +40,7 @@ class List<T> implements Iterable<T>
                 rs.add(r);
             }
         }
-        return rs;
+        return new List<>(rs);
     }
 
     <R> List<R> map(Function<T, R> f)

@@ -32,6 +32,18 @@ class Error<T>
     {
         return result;
     }
+    
+    T getOrElse(T otherwise)
+    {
+        if (ok)
+        {
+            return result;
+        }
+        else
+        {
+            return otherwise;
+        }
+    }
 
     <R> Error<R> flatMap(Function<T, Error<R>> f)
     {
