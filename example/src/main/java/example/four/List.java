@@ -32,7 +32,7 @@ public abstract class List<T> implements Iterable<T>
     {
         return new Empty<>();
     }
-    
+
     // should not be extended outside of this compilation unit
     List()
     {}
@@ -47,10 +47,15 @@ public abstract class List<T> implements Iterable<T>
         return foldRight(empty(), (t, rlist) -> f.apply(t).foldRight(rlist, (r, rs) -> rs.prepend(r)));
     }
 
+    public static final <T> List<T> concatenate(List<List<T>> ts)
+    {
+        return ts.foldRight(empty(), (t, rlist) -> t.foldRight(rlist, (r, rs) -> rs.prepend(r)));
+    }
+
     public final <R> List<R> map(Function<T, R> f)
     {
         return flatMap(f.andThen(r -> unit(r)));
-        //return foldRight(empty(), (t, rs) -> rs.prepend(f.apply(t)));
+        // return foldRight(empty(), (t, rs) -> rs.prepend(f.apply(t)));
     }
 
     public final T fold(T zero, BinaryOperator<T> f)
@@ -71,6 +76,11 @@ public abstract class List<T> implements Iterable<T>
     public <X> X foldRight(X zero, BiFunction<T, X, X> f)
     {
         return reverse().foldLeft(zero, (x, t) -> f.apply(t, x));
+    }
+
+    public int size()
+    {
+        return foldLeft(0, (i, meh) -> i + 1);
     }
 
     //
@@ -177,9 +187,9 @@ public abstract class List<T> implements Iterable<T>
     {
         if (isEmpty())
             return "List()";
-        final StringBuilder builder = new StringBuilder("List(");
-        this.forEach(t -> builder.append(t).append(","));
-        builder.setCharAt(builder.length() - 1, ')');
-        return builder.toString();
+        final StringBuilder sb = new StringBuilder("List(");
+        forEach(t -> sb.append(t).append(","));
+        sb.setCharAt(sb.length() - 1, ')');
+        return sb.toString();
     }
 }
