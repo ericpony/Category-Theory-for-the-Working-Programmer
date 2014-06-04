@@ -1,35 +1,29 @@
 package example.two;
 
-class Error<T>
-{
-    boolean ok;
-    String message;
-    T result;
+class Error<T> {
+  boolean ok;
+  String message;
+  T result;
 
-    Error(String message)
-    {
-        this.ok = false;
-        this.message = message;
-    }
+  Error(String message) {
+    this.ok = false;
+    this.message = message;
+  }
 
-    Error(T result)
-    {
-        this.ok = true;
-        this.result = result;
-    }
+  Error(T result) {
+    this.ok = true;
+    this.result = result;
+  }
 
-    boolean ok()
-    {
-        return ok;
-    }
+  boolean ok() {
+    return ok;
+  }
 
-    String message()
-    {
-        return message;
-    }
+  String message() {
+    return message;
+  }
 
-    T result()
-    {
-        return result;
-    }
+  T result() {
+    return result;
+  }
 }

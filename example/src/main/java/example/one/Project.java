@@ -1,16 +1,13 @@
 package example.one;
 
-class Project
-{
-    final String name;
+class Project {
+  final String name;
 
-    Project(String name)
-    {
-        this.name = name;
-    }
+  Project(String name) {
+    this.name = name;
+  }
 
-    String getName()
-    {
-        return name;
-    }
+  String getName() {
+    return name;
+  }
 }

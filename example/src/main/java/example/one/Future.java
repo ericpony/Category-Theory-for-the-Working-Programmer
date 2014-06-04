@@ -1,16 +1,13 @@
 package example.one;
 
-class Future<T>
-{
-    T result;
+class Future<T> {
+  T result;
 
-    Future(T result)
-    {
-        this.result = result;
-    }
+  Future(T result) {
+    this.result = result;
+  }
 
-    T get()
-    {
-        return result;
-    }
+  T get() {
+    return result;
+  }
 }
