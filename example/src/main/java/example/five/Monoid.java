@@ -30,4 +30,15 @@ public class Monoid<T> implements BinaryOperator<T> {
   public final T zero() {
     return zero;
   }
+
+  public static <T> void laws(Monoid<T> m, List<T> ts) {
+    if (!ts.foldLeft(m.zero(), m).equals(ts.foldRight(m.zero(), m)))
+      throw new AssertionError("m fails associativity law");
+    for (T t : ts) {
+      if (!m.apply(m.zero(), t).equals(t))
+        throw new AssertionError("m.zero fails identity law (right) for: " + t);
+      if (!m.apply(t, m.zero()).equals(t))
+        throw new AssertionError("m.zero fails identity law (left) for: " + t);
+    }
+  }
 }
