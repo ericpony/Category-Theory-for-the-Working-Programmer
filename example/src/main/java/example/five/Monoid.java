@@ -32,8 +32,15 @@ public class Monoid<T> implements BinaryOperator<T> {
   }
 
   public static <T> void laws(Monoid<T> m, List<T> ts) {
-    if (!ts.foldLeft(m.zero(), m).equals(ts.foldRight(m.zero(), m)))
-      throw new AssertionError("m fails associativity law");
+    if (ts.size() >= 3) {
+      T t1 = ts.head();
+      T t2 = ts.tail().head();
+      T t3 = ts.tail().tail().head();
+      T tl = m.apply(t1, m.apply(t2, t3));
+      T tr = m.apply(m.apply(t1, t2), t3);
+      if (!tl.equals(tr))
+        throw new AssertionError("m.apply fails associativity law: " + tl + " != " + tr);
+    }
     for (T t : ts) {
       if (!m.apply(m.zero(), t).equals(t))
         throw new AssertionError("m.zero fails identity law (right) for: " + t);

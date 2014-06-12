@@ -6,7 +6,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.function.Function.identity;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +42,7 @@ public class Monoids {
 
   public static class Lists {
     public static <T> Monoid<List<T>> free() {
-      return monoid(List.empty(), (t, u) -> t.isEmpty() ? u : u.isEmpty() ? t : u.prependAll(t));
+      return monoid(List.empty(), (t, u) -> u.prependAll(t));
     }
   }
 
@@ -51,7 +50,7 @@ public class Monoids {
     public static <T> Monoid<Function<T, T>> endo() {
       return monoid(identity(), (t, u) -> t.andThen(u));
     }
-    
+
     public static <A, M> Monoid<Function<A, M>> pointwise(Monoid<M> m) {
       return monoid(a -> m.zero(), (f, g) -> a -> m.apply(f.apply(a), g.apply(a)));
     }

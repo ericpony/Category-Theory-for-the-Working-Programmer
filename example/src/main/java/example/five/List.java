@@ -28,7 +28,8 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   }
 
   public static final <T> List<T> concatenate(List<List<T>> ts) {
-    //return ts.foldRight(empty(), (t, rlist) -> t.foldRight(rlist, (r, rs) -> rs.prepend(r)));
+    // return ts.foldRight(empty(), (t, rlist) -> t.foldRight(rlist, (r, rs) ->
+    // rs.prepend(r)));
     return ts.flatMap(Function.identity());
   }
 
@@ -40,7 +41,7 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   }
 
   public final List<T> prependAll(List<T> ts) {
-    return concatenate(of(ts, this));
+    return ts.isEmpty() ? this : isEmpty() ? ts : concatenate(of(ts, this));
   }
 
   public final <R> List<R> flatMap(Function<T, List<R>> f) {
@@ -84,9 +85,9 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
 
   public abstract List<T> reverse();
 
-  abstract T head() throws NoSuchElementException;
+  public abstract T head() throws NoSuchElementException;
 
-  abstract List<T> tail() throws NoSuchElementException;
+  public abstract List<T> tail() throws NoSuchElementException;
 
   static class Node<T> extends List<T> {
     final List<T> next;
@@ -157,5 +158,23 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
     forEach(t -> sb.append(t).append(","));
     sb.setCharAt(sb.length() - 1, ')');
     return sb.toString();
+  }
+
+  @Override public int hashCode() {
+    return foldLeft(0, (h, t) -> 31 * (t.hashCode() + h));
+  }
+
+  @Override public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null || this.getClass() != obj.getClass())
+      return false;
+    return foldLeft(Pair.<Boolean, List<?>> of(true, (List<?>) obj), (b, t) -> {
+      if (!b.left())
+        return b;
+
+      List<?> other = b.right();
+      return isEmpty() ? Pair.of(other.isEmpty(), empty()) : Pair.of(t.equals(other.head()), other.tail());
+    }).left();
   }
 }

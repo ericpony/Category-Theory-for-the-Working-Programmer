@@ -25,15 +25,13 @@ public class Pair<A, B> {
 
   @Override public int hashCode() {
     final int prime = 31;
-    return (prime * (prime * a.hashCode()) + b.hashCode());
+    return prime * ((prime * a.hashCode()) + b.hashCode());
   }
 
   @Override public boolean equals(Object obj) {
     if (this == obj)
       return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (obj == null || (getClass() != obj.getClass()))
       return false;
     Pair<?, ?> other = (Pair<?, ?>) obj;
     return a.equals(other.a) && b.equals(other.b);
