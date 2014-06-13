@@ -71,8 +71,12 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
     return reverse().foldLeft(zero, (x, t) -> f.apply(t, x));
   }
 
-  public int size() {
+  public final int size() {
     return foldLeft(0, (i, meh) -> i + 1);
+  }
+
+  public final List<T> reverse() {
+    return foldLeft(List.<T> empty(), (ts, t) -> ts.prepend(t));
   }
 
   //
@@ -80,8 +84,6 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   //
 
   public abstract boolean isEmpty();
-
-  public abstract List<T> reverse();
 
   public abstract Option<T> headOption();
 
@@ -114,20 +116,12 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
       return Option.unit(next);
     }
 
-    @Override public List<T> reverse() {
-      return foldLeft(List.<T> empty(), (ts, t) -> ts.prepend(t));
-    }
-
     @Override public boolean isEmpty() {
       return false;
     }
   }
 
   static class Empty<T> extends List<T> {
-    @Override public List<T> reverse() {
-      return this;
-    }
-
     @Override public boolean isEmpty() {
       return true;
     }
