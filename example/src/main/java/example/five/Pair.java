@@ -2,7 +2,10 @@ package example.five;
 
 import static java.util.Objects.requireNonNull;
 
-public class Pair<A, B> {
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+
+public final class Pair<A, B> {
   public static <A, B> Pair<A, B> of(A a, B b) {
     return new Pair<>(a, b);
   }
@@ -21,6 +24,14 @@ public class Pair<A, B> {
 
   public B right() {
     return b;
+  }
+
+  public boolean both(BiPredicate<A, B> p) {
+    return p.test(a, b);
+  }
+  
+  public <T> T fold(BiFunction<A, B, T> f) {
+    return f.apply(a, b);
   }
 
   @Override public int hashCode() {

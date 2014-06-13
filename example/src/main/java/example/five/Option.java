@@ -87,6 +87,10 @@ public abstract class Option<T> implements Iterable<T>, Foldable<T> {
     return fold(() -> false, t -> p.test(t));
   }
 
+  @Override public final <M> M foldMap(Function<T, M> f, Monoid<M> m) {
+    return fold(() -> m.zero(), t -> f.apply(t));
+  }
+
   @Override public final <A> A foldRight(A zero, BiFunction<T, A, A> f) {
     return fold(() -> zero, t -> f.apply(t, zero));
   }

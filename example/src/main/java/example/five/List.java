@@ -28,8 +28,6 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   }
 
   public static final <T> List<T> concatenate(List<List<T>> ts) {
-    // return ts.foldRight(empty(), (t, rlist) -> t.foldRight(rlist, (r, rs) ->
-    // rs.prepend(r)));
     return ts.flatMap(Function.identity());
   }
 
@@ -49,8 +47,8 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   }
 
   public final <R> List<R> map(Function<T, R> f) {
-    return flatMap(f.andThen(r -> unit(r)));
     // return foldRight(empty(), (t, rs) -> rs.prepend(f.apply(t)));
+    return flatMap(f.andThen(r -> unit(r)));
   }
 
   public final <X> X foldLeft(X zero, BiFunction<X, T, X> f) {
@@ -61,12 +59,12 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
     return result;
   }
 
-  @Override public <M> M foldMap(Function<T, M> f, Monoid<M> monoid) {
-    return foldLeft(monoid.zero(), (m, t) -> monoid.apply(m, f.apply(t)));
+  public final T fold(T zero, BinaryOperator<T> f) {
+    return foldLeft(zero, f);
   }
 
-  @Override public final T fold(T zero, BinaryOperator<T> f) {
-    return foldLeft(zero, f);
+  @Override public <M> M foldMap(Function<T, M> f, Monoid<M> monoid) {
+    return foldLeft(monoid.zero(), (m, t) -> monoid.apply(m, f.apply(t)));
   }
 
   public <X> X foldRight(X zero, BiFunction<T, X, X> f) {
@@ -85,9 +83,19 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
 
   public abstract List<T> reverse();
 
-  public abstract T head() throws NoSuchElementException;
+  public abstract Option<T> headOption();
 
-  public abstract List<T> tail() throws NoSuchElementException;
+  public abstract Option<List<T>> tailOption();
+
+  // non-total nasties
+
+  T head() throws NoSuchElementException {
+    return headOption().get();
+  }
+
+  List<T> tail() throws NoSuchElementException {
+    return tailOption().get();
+  }
 
   static class Node<T> extends List<T> {
     final List<T> next;
@@ -98,15 +106,15 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
       this.value = value;
     }
 
-    public T head() {
-      return value;
+    @Override public Option<T> headOption() {
+      return Option.unit(value);
     }
 
-    public List<T> tail() {
-      return next;
+    @Override public Option<List<T>> tailOption() {
+      return Option.unit(next);
     }
 
-    public List<T> reverse() {
+    @Override public List<T> reverse() {
       return foldLeft(List.<T> empty(), (ts, t) -> ts.prepend(t));
     }
 
@@ -124,12 +132,12 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
       return true;
     }
 
-    @Override public T head() {
-      throw new NoSuchElementException();
+    @Override public Option<T> headOption() {
+      return Option.none();
     }
 
-    @Override public List<T> tail() {
-      throw new NoSuchElementException();
+    @Override public Option<List<T>> tailOption() {
+      return Option.none();
     }
   }
 
@@ -154,10 +162,10 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
   @Override public String toString() {
     if (isEmpty())
       return "List()";
-    final StringBuilder sb = new StringBuilder("List(");
-    forEach(t -> sb.append(t).append(","));
-    sb.setCharAt(sb.length() - 1, ')');
-    return sb.toString();
+    return Unit.tap(new StringBuilder("List("), sb -> {
+      forEach(t -> sb.append(t).append(","));
+      sb.setCharAt(sb.length() - 1, ')');
+    }).toString();
   }
 
   @Override public int hashCode() {
@@ -169,12 +177,15 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
       return true;
     if (obj == null || this.getClass() != obj.getClass())
       return false;
-    return foldLeft(Pair.<Boolean, List<?>> of(true, (List<?>) obj), (b, t) -> {
-      if (!b.left())
-        return b;
 
-      List<?> other = b.right();
-      return isEmpty() ? Pair.of(other.isEmpty(), empty()) : Pair.of(t.equals(other.head()), other.tail());
-    }).left();
+    @SuppressWarnings("unchecked")
+    List<Object> that = (List<Object>) obj;
+    return foldLeft(Option.unit(that), //
+      (o, t) -> o.flatMap( //
+        other -> other.headOption() //
+          .filter(ot -> ot.equals(t)) //
+          .flatMap(i -> other.tailOption()) //
+        ) //
+    ).exists(l -> l.isEmpty());
   }
 }
