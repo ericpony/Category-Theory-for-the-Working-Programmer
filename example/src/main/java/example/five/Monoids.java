@@ -66,6 +66,18 @@ public class Monoids {
         return unmodifiableSet(tap(new HashSet<>(t), s -> s.addAll(u)));
       });
     }
+
+    public static <T> Monoid<Set<T>> union2() {
+      return monoid(
+        Collections.emptySet(),
+        (t, u) -> {
+          HashSet<T> result = new HashSet<>();
+          result.addAll(t);
+          result.addAll(u);
+          return unmodifiableSet(result);
+        }
+      );
+    }
   }
 
   public static class Pairs {

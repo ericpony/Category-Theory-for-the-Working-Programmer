@@ -3,6 +3,7 @@ package example.five;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -61,6 +62,18 @@ public abstract class List<T> implements Iterable<T>, Foldable<T> {
 
   public final T fold(T zero, BinaryOperator<T> f) {
     return foldLeft(zero, f);
+  }
+
+  public T fold(Monoid<T> m) {
+    T result = m.zero();
+    for (T t : this) {
+      result = m.apply(result, t);
+    }
+    return result;
+  }
+
+  public <M> M foldMapFilter(Predicate<T> p, Function<T, M> f, Monoid<M> m) {
+    return foldMap(t -> p.test(t) ? f.apply(t) : m.zero(), m);
   }
 
   @Override public <M> M foldMap(Function<T, M> f, Monoid<M> monoid) {
