@@ -9,6 +9,7 @@ import static java.util.function.Function.identity;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class Monoids {
@@ -68,21 +69,28 @@ public class Monoids {
     }
 
     public static <T> Monoid<Set<T>> union2() {
-      return monoid(
-        Collections.emptySet(),
-        (t, u) -> {
-          HashSet<T> result = new HashSet<>();
-          result.addAll(t);
-          result.addAll(u);
-          return unmodifiableSet(result);
-        }
-      );
+      return monoid(Collections.emptySet(), (t, u) -> {
+        HashSet<T> result = new HashSet<>();
+        result.addAll(t);
+        result.addAll(u);
+        return unmodifiableSet(result);
+      });
     }
   }
 
-  public static class Pairs {
+  public static class Product {
     public static <A, B> Monoid<Pair<A, B>> pair(Monoid<A> ma, Monoid<B> mb) {
-      return monoid(Pair.of(ma.zero(), mb.zero()), (t, u) -> Pair.of(ma.apply(t.left(), u.left()), mb.apply(t.right(), u.right())));
+      return product(ma, mb, Pair::of, Pair::first, Pair::second);
+    }
+
+    public static <A, B, R> Monoid<R> product(Monoid<A> m, Monoid<B> n, //
+      BiFunction<A, B, R> pair, Function<R, A> left, Function<R, B> right) {
+      return new Monoid<R>(pair.apply(m.zero(), n.zero()), //
+        (a, b) -> //
+        pair.apply( //
+          m.apply(left.apply(a), left.apply(b)), //
+          n.apply(right.apply(a), right.apply(b))) //
+      );
     }
   }
 }

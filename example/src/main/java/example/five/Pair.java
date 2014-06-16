@@ -10,6 +10,14 @@ public final class Pair<A, B> {
     return new Pair<>(a, b);
   }
   
+  public static <A, B> A first(Pair<A, B> p) {
+    return p.left();
+  }
+
+  public static <A, B> B second(Pair<A, B> p) {
+    return p.right();
+  }
+
   private final A a;
   private final B b;
   
