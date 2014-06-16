@@ -4,13 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
 
 public class Monoid<T> implements BinaryOperator<T> {
   public static <T> Monoid<T> monoid(T zero, BinaryOperator<T> op) {
     return new Monoid<>(zero, op);
   }
-  
+
   private final T zero;
   private final BiFunction<T, T, T> f;
 
@@ -22,7 +21,7 @@ public class Monoid<T> implements BinaryOperator<T> {
   @Override public T apply(T t, T u) {
     return f.apply(t, u);
   }
-  
+
   /**
    * A value which when fed into either side of the
    * {@link #apply(Object, Object)} method, effectively creates an identity
@@ -48,12 +47,5 @@ public class Monoid<T> implements BinaryOperator<T> {
       if (!m.apply(t, m.zero()).equals(t))
         throw new AssertionError("m.zero fails identity law (left) for: " + t);
     }
-  }
-
-  public static <T, S, R> Monoid<R> product(Monoid<T> m, Monoid<S> n,
-      BiFunction<T, S, R> pair, Function<R, T> left, Function<R, S> right) {
-    return new Monoid<R>(
-      pair.apply(m.zero(), n.zero()),
-      (a, b) -> pair.apply(m.apply(left.apply(a), left.apply(b)), n.apply(right.apply(a), right.apply(b))));
   }
 }
