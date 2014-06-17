@@ -49,7 +49,7 @@ public class Monoids {
 
   public static class Functions {
     public static <T> Monoid<Function<T, T>> endo() {
-      return monoid(identity(), (t, u) -> t.andThen(u));
+      return monoid(identity(), Function::andThen);
     }
 
     public static <A, M> Monoid<Function<A, M>> pointwise(Monoid<M> m) {
@@ -70,8 +70,7 @@ public class Monoids {
 
     public static <T> Monoid<Set<T>> union2() {
       return monoid(Collections.emptySet(), (t, u) -> {
-        HashSet<T> result = new HashSet<>();
-        result.addAll(t);
+        HashSet<T> result = new HashSet<>(t);
         result.addAll(u);
         return unmodifiableSet(result);
       });

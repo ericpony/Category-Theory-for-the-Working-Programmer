@@ -32,7 +32,7 @@ public abstract class Option<T> implements Iterable<T>, Foldable<T> {
   // implementations
   //
 
-  static class Some<T> extends Option<T> {
+  static final class Some<T> extends Option<T> {
     final T value;
 
     Some(T value) {
@@ -44,9 +44,7 @@ public abstract class Option<T> implements Iterable<T>, Foldable<T> {
     }
   }
 
-  static class None<T> extends Option<T> {
-    None() {}
-
+  static final class None<T> extends Option<T> {
     @Override public <R> R fold(Supplier<R> s, Function<T, R> f) {
       return s.get();
     }
